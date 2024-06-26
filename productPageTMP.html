@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zxx">
+
+<%- include('../header'); %>
+
+<body>
+<script src="/js/bootstrap.min.js"></script>
+<div id="wrapper">
+
+    <!-- header begin -->
+    <%- include('../toolbar'); %>
+    <!-- header close -->
+    <!-- content begin -->
+    <div class="no-bottom no-top redesign-bg" id="content">
+        <div id="top"></div>
+        <section aria-label="section" class="sm-mt-0" id="detailsApp" style="margin-top: 25px">
+            <!-- content -->
+            <div class="container main-display">
+                <!-- Vue App Container -->
+                <div id="vue3-app" class="row" style="min-height: 500px;"></div>
+                <!-- ----------------- -->
+            </div>
+        </section>
+    </div>
+
+    <a href="#" id="back-to-top"></a>
+
+    <!-- footer begin -->
+    <%- include('../footer'); %>
+    <!-- footer close -->
+
+    <style>
+        .modal-body.details label{
+            width: 100px;
+        }
+    </style>
+
+    <style>
+        .btn-processing {
+            pointer-events: none;
+            opacity: 0.6;
+            position: relative;
+        }
+
+        .btn-processing::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50%;
+            height: 50%;
+            border: 2px solid #ffffff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            transform: translate(-50%, -50%);
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        
+        .dopulse {
+            opacity: 1;
+            animation: pulse 1s ease-in-out infinite; /* Add the pulse animation */
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+    </style>
+
+</div>
+
+<script type="text/x-template" id="vue3-template">
+
+    <div class="col-12">
+        <div class="title-edit-btn title-desktop">
+            <div>
+                <h2 class="product-page-title" style="margin-bottom: -10px; margin-top: -8px">
+                    <div style="display: inline-block"><%= product.name %></div>
+                    <div class="author_info" style="display:inline-block; font-size:0.5em;margin-left: 10px;">
+                        <a v-if="<%= product.slug %>" href="author/<%= product.slug %>">
+                            <span v-if="<%= !product?.nickname %>"> Username </span>
+                            <span else> <%= product?.nickname %> </span>
+                        </a>
+                    </div>
+                </h2>
+                <p style="font-size:0.8em;line-height: 1.1em;">
+                    Eurowings Touristic Market Place (TMP) for early demand collection and allotment trading. It introduces EW Flight Nuggets, which are tokens defining route details, these can be bundled and traded among tour operators. The TMP offers features such as a best price guarantee, flexible protection options, tradeability on the platform, buy-back offers, and automated payments. It aims to streamline the process of booking and trading flight allotments for future travel periods.
+                </p>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-md-10 product-left">
+        <div class="spacer30" style="background-size: cover;"></div>
+        <ul id="product-tabs-list" class= "product-tabs-nav">
+            <ul class="nav nav-pills nav-left desktop-tabs" style="gap: 5px;" role="tablist">
+                <li key="market" class="nav-item" role="presentation">
+                    <button class="nav-link nav-button" @click="selectFilter('market')" :class=" { 'active': filter === 'market' }" type="button" role="tab" style="float: left;margin-right: 10px;">
+                        <span>Market</span>
+                    </button>
+                    <button class="nav-link nav-button" @click="selectFilter('mine')" :class=" { 'active': filter === 'mine' }"  type="button" role="tab">
+
+                        <span>Mine</span>
+                    </button>
+                </li>
+            </ul>
+            <div class="nav-right product-tabs-social">
+                <!-- embed button -->
+                <div class="nft__item_like product-social-btn copy"
+                     data-bs-toggle="tooltip" data-bs-placement="top"
+                     data-bs-original-title="Embed widget">
+                    <i class="fa fa-code">
+                    </i>
+                </div>
+                <!-- copy button -->
+                <div class="nft__item_like product-social-btn copy"
+                     data-bs-toggle="tooltip" data-bs-placement="top"
+                     data-bs-original-title="Copy to clipboard">
+                    <i class="fa fa-clone" @click="copy()">
+                    </i>
+                </div>
+                <!-- like button -->
+                <!-- share button -->
+                <!--                                <div class="nft__item_like product-social-btn share">-->
+                <!--                                    <i class="fa fa-share-alt fa-fw"></i>-->
+                <!--                                </div>-->
+            </div>
+        </ul>
+
+        <div class="order-group scrollable overflow-save">
+            <div class="tab-component tab-columns eight-column-orders orders-columns">
+                <span>From</span>
+                <span>To</span>
+                <span>Arrival</span>
+                <span>Seats</span>
+                <span>Ret/Chain</span>
+                <span>Flex</span>
+                <span>Price</span>
+                <span>Actions</span>
+            </div>
+
+            <div class="tab-component eight-column-orders" v-for="(nugget, index) in displayedNuggets" :key="nugget.id">
+                <div class="tab-component">
+                    <span v-if="nugget.from==0">PMI</span>
+                    <span v-if="nugget.from==1">RJK</span>
+                    <span v-if="nugget.from==2">CGN</span>
+                    <span v-if="nugget.from==3">BER</span>
+                    <span v-if="nugget.from==4">BSL</span>
+                </div>
+                <div class="tab-component">
+                    <span v-if="nugget.to==0">PMI</span>
+                    <span v-if="nugget.to==1">RJK</span>
+                    <span v-if="nugget.to==2">CGN</span>
+                    <span v-if="nugget.to==3">BER</span>
+                    <span v-if="nugget.to==4">BSL</span>
+                </div>
+                <div class="tab-component">
+                    <span v-if="nugget.arrivalTime==0">AM</span>
+                    <span v-if="nugget.arrivalTime==1">PM</span>
+                </div>
+                <div class="tab-component">
+                    <span>{{nugget.seats}}</span>
+                </div>
+                <div class="tab-component">
+                    <span>0</span> / <span>0</span>
+                </div>
+                <div class="tab-component "  >
+                    <i v-if="nugget.flex && !nugget.updatePrice" style="color:green;" class="fas fa-check-circle"></i>
+                    <span v-if="nugget.updatePrice" class="dopulse" :class="{ 'pulse': this.priceUpdate }">
+                        <i class="fas fa-arrow-circle-down" style="color:green"></i>&nbsp;{{formattedPrice(nugget.updatePrice || 0)}}
+                    </span>
+                    <i v-if="!nugget.flex" style="color:red;" class="fas fa-times-circle"></i>
+                </div>
+                <div class="tab-component">
+                    <span v-if="!nugget.forSale">{{ formattedPrice(nugget.price || 0) }}</span>
+                    <span v-if="nugget.forSale">
+                        <i class="fas fa-exchange-alt" style="color:purple;"></i>
+                        {{ formattedPrice(nugget.salePrice || 0) }}
+                    </span>
+                </div>
+                <div class="tab-component-button actions-row">
+                    <button  v-if="!nugget.canSell"
+                            style="scale: 90%; cursor: pointer;min-width: 50px;background:#56881a;"
+                            data-bs-toggle="modal" data-bs-target="#purchaseNuggetModal"
+                            type="button"
+                            @click="showDetails(nugget, 'purchase')"
+                             title="Purchase"
+                            class="order-action-button">
+                        <i class="fas fa-shopping-cart"></i>
+                    </button>
+                    <button  v-if="canSell(nugget)"
+                             style="scale: 90%; cursor: pointer;min-width: 50px;background:#c84b4b;"
+                             data-bs-toggle="modal" data-bs-target="#purchaseNuggetModal"
+                             type="button"
+                             title="Sell"
+                             @click="showDetails(nugget, 'sale')"
+                             class="order-action-button">
+                        <i class="fas fa-cart-arrow-down"></i>
+                    </button>
+                    <button  v-if="nugget.updatePrice"
+                             style="scale: 90%; cursor: pointer;min-width: 50px;background:#48ae43;"
+                             type="button"
+                             title="Accept Flex"
+                             @click="acceptFlex(nugget)"
+                             class="order-action-button">
+                        <i class="fas fa-vote-yea"></i>
+                    </button>
+                    <button  v-if="nugget.forSale"
+                             style="scale: 90%; cursor: pointer;min-width: 50px;background:#484848;"
+                             type="button"
+                             title="Cancel Offer"
+                             @click="cancelSell(nugget)"
+                             class="order-action-button">
+                        <i class="fas fa-window-close"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!--        <div v-if="!activeNetwork" class="tab-component flex-center">-->
+            <!--          <span class="fetch-empty">-->
+            <!--              <i>Please switch network to see pending payments.</i>-->
+            <!--          </span>-->
+            <!--        </div>-->
+            <div v-if="displayedNuggets.length === 0" class="tab-component flex-center">
+            <span class="fetch-empty">
+                <i>There are currently no nuggets available</i>
+            </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-2 product-right">
+        <a href="https://columbus.caminoscan.com/address/0xa0a084e688F3D0C5F39a9E5A84702Ac342E6224f" target="_blank" style="margin-bottom:5px;" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-original-title="View on: Suite Camino" class="column-item" contract="[object Object]" token="[object Object]">
+            <img src="/images/brands/networks/camino.png" class="network-image">
+            <span>Camino TestNet</span>
+        </a>
+
+        <div data-bs-toggle="tooltip" data-bs-placement="top" title="" data-bs-original-title="Tangible tax" style="margin-bottom:5px;" class="column-item" contract="[object Object]" token="[object Object]" network="[object Object]"><i class="fas fa-hand-holding-usd"></i>
+            <span class="nft-item-price">
+            TMP Fee: 0.5%
+            </span>
+        </div>
+
+        <a href="" target="_blank" data-bs-toggle="tooltip" data-bs-placement="top" style="margin-bottom:15px;" data-bs-original-title="Vesting Token: Camino TestNet" class="column-item" product="[object Object]" contract="[object Object]" network="[object Object]"><i class="fas fa-coins"></i> <span>CAM  <!----></span></a>
+
+
+        <div class="col-md-12 product-quantity-card full-width" style="background-size: cover;">
+                <a class="nft_attr quantity-card price-card"><h5 class="quantity-card-title">Seats Available</h5>
+                    <h4 class="quantity-card-amount">{{totalSeatsAvailable}}</h4>
+                </a>
+        </div>
+
+        <hr style="margin: 20px 0px 20px 0px;"/>
+
+        <button type="button" class="btn btn-primary" style="width:100%;" data-bs-toggle="modal" data-bs-target="#createNuggetModal">
+            Create Nugget
+        </button>
+    </div>
+
+    <!-- Modal for creting nugget -->
+    <div class="modal fade" id="createNuggetModal" tabindex="-1" aria-labelledby="createNuggetModalLabel" aria-hidden="true" ref="createNuggetModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createNuggetModalLabel">Create Nugget</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form @submit.prevent="createNugget">
+                        <div class="mb-3">
+                            <label for="from" class="form-label">From</label>
+                            <select class="form-control" id="from" v-model="newNugget.from">
+                                <option value="0">PMI</option>
+                                <option value="1">RJK</option>
+                                <option value="2">CGN</option>
+                                <option value="3">BER</option>
+                                <option value="4">BSL</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="to" class="form-label">To</label>
+                            <select class="form-control" id="to" v-model="newNugget.to">
+                                <option value="0">PMI</option>
+                                <option value="1">RJK</option>
+                                <option value="2">CGN</option>
+                                <option value="3">BER</option>
+                                <option value="4">BSL</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="arrivalTime" class="form-label">Arrival Time</label>
+                            <select class="form-control" id="arrivalTime" v-model="newNugget.arrivalTime">
+                                <option value="0">AM</option>
+                                <option value="1">PM</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="seats" class="form-label">Seats</label>
+                            <input type="number" class="form-control" id="seats" v-model="newNugget.seats" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="price" class="form-label">Price</label>
+                            <input type="number" class="form-control" id="price" v-model="newNugget.price" required>
+                        </div>
+                        <!--
+                        <div class="mb-3">
+                            <label for="bRet" class="form-label">bRet</label>
+                            <input type="number" class="form-control" id="bRet" v-model="newNugget.bRet" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bChain" class="form-label">bChain</label>
+                            <input type="number" class="form-control" id="bChain" v-model="newNugget.bChain" required>
+                        </div>
+                        -->
+                        <!--
+                        <div class="mb-3">
+                            <label for="nuggetType" class="form-label">Type</label>
+                            <input type="number" class="form-control" id="nuggetType" v-model="newNugget.nuggetType" required>
+                        </div>
+                        -->
+                        <div class="mb-3">
+                            <label for="flex" class="form-label">Flex</label>
+                            <input type="checkbox" class="form-check-input" id="flex" v-model="newNugget.flex">
+                        </div>
+                        <button type="submit" v-bind:class="{ 'btn-processing' : processing }" class="btn btn-primary">Create</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Trade modal -->
+    <div class="modal fade" id="purchaseNuggetModal" tabindex="-1" aria-labelledby="purchaseNuggetModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="purchaseNuggetModalLabel">
+                        <span v-if="modalMode == 'purchase'">Purchase Nugget</span>
+                        <span v-if="modalMode == 'sale'">Offer Nugget</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body details">
+                    <div>
+                        <label style="display:inline-block">From</label>
+                        <div class="tab-component" style="display:inline-block;width:100px;">
+                            <span v-if="selectedNugget.from==0">PMI</span>
+                            <span v-if="selectedNugget.from==1">RJK</span>
+                            <span v-if="selectedNugget.from==2">CGN</span>
+                            <span v-if="selectedNugget.from==3">BER</span>
+                            <span v-if="selectedNugget.from==4">BSL</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:inline-block">To</label>
+                        <div class="tab-component" style="display:inline-block;width:100px;">
+                            <span v-if="selectedNugget.to==0">PMI</span>
+                            <span v-if="selectedNugget.to==1">RJK</span>
+                            <span v-if="selectedNugget.to==2">CGN</span>
+                            <span v-if="selectedNugget.to==3">BER</span>
+                            <span v-if="selectedNugget.to==4">BSL</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:inline-block">Arrival</label>
+                        <div class="tab-component" style="display:inline-block;width:100px;">
+                            <span v-if="selectedNugget.arrivalTime==0">AM</span>
+                            <span v-if="selectedNugget.arrivalTime==1">PM</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display:inline-block">Seats</label>
+                        <div class="tab-component" style="display:inline-block;width:100px;">
+                            <span>{{selectedNugget.seats}}</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="display:inline-block">Flex</label>
+                        <div class="tab-component" style="display:inline-block;width:100px;">
+                            <i v-if="selectedNugget.flex" style="color:green;" class="fas fa-check-circle"></i>
+                            <i v-if="!selectedNugget.flex" style="color:red;" class="fas fa-times-circle"></i>
+                        </div>
+                    </div>
+
+                    <br/>
+
+                    <div>
+                        <label>Price:</label>
+                        <input v-if="modalMode == 'purchase'" class="form-control" v-bind:value="formattedPurchasePrice" v-bind:disabled="modalMode == 'purchase'">
+                        <input v-if="modalMode == 'sale'" class="form-control" v-model="selectedNugget.salePrice">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" aria-label="Close">
+                        Cancel
+                    </button>
+                    <button v-if="modalMode == 'purchase'" type="button" v-bind:class="{ 'btn-processing' : processing }" class="btn btn-primary" @click="doPurchase(selectedNugget)">
+                        Purchase
+                    </button>
+                    <button v-if="modalMode == 'sale'" type="button" v-bind:class="{ 'btn-processing' : processing }" class="btn btn-danger" @click="doOffer(selectedNugget)">
+                        Sell
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</script>
+
+<!-- Javascript Files
+================================================== -->
+<%- include('../scripts'); %>
+<!-- load vue and modals -->
+
+</body>
+
+<script src="https://unpkg.com/vue" onload="window.Vue3 = Vue;"></script>
+<script>
+    window.addEventListener('load', () => {
+        const { createApp } = Vue3;
+
+        // Get the template content
+        const template = document.getElementById('vue3-template').innerHTML;
+
+        createApp({
+            data() {
+                return {
+                    message: 'Hello from Vue 3!',
+                    counter: 0,
+                    contract: <%- JSON.stringify(contract) %>,
+                    product:  <%- JSON.stringify(product) %>,
+                    supportedExtensions: <%- JSON.stringify(supportedExtensions) %>,
+                    network: <%- JSON.stringify(network) %>,
+                    accounts: [],
+                    newNugget: {
+                        from: 0,
+                        to: 1,
+                        arrivalTime: 0,
+                        seats: 10,
+                        price: 2,
+                        bRet: 0,
+                        bChain: 0,
+                        nuggetType: 0,
+                        flex: true
+                    },
+                    selectedNugget: {},
+                    totalSeatsAvailable: 0,
+                    nuggets: [], // Store nuggets here,
+                    myNuggets: [], // Only nuggets owned by me
+                    processing: false, // used to block buttons while interacting with contract,
+                    modalMode: "",
+                    filter: "market", // market || mine,
+                    displayedNuggets: [],
+                    priceUpdate: false
+                };
+            },
+            methods: {
+                increment() {
+                    this.counter++;
+                },
+                isConnected() {
+                    return true;
+                },
+                getLikes(){
+                    //debugger;
+                    //
+                    // console.log(toolbar.getLikes(this.product_id)); //[this.product._id]
+                    return 2;
+                },
+                selectFilter(filter){
+                    this.filter = filter;
+                    this.updateNuggetsDisplay();
+                },
+                updateNuggetsDisplay() {
+                    if (this.filter === 'market') {
+                        this.displayedNuggets = this.nuggets; // Show all nuggets
+                    } else if (this.filter === 'mine') {
+                        this.displayedNuggets = this.myNuggets; // Show only my nuggets
+                    }
+                },
+                canSell(nugget){
+                    const web3 = new Web3(Web3.givenProvider);
+                    return nugget.canSell && !nugget.forSale;
+                },
+                async showDetails(nugget, type){
+                    this.selectedNugget = nugget;
+                    this.modalMode = type;
+                    if (type == "sale")
+                        this.selectedNugget.salePrice = 0;
+                },
+                async cancelSell(nugget){
+                    const web3 = new Web3(Web3.givenProvider);
+                    const accounts = await web3.eth.requestAccounts();
+                    const contract = new web3.eth.Contract(this.contract.abi, this.product.address);
+                    this.processing = true;
+
+                    try {
+                        //const priceInWei = web3.utils.toWei(nugget.updatePrice.toString(), 'ether');
+                        await contract.methods.cancelOffer(nugget.index).send({ from: accounts[0]  });
+                        alert('Offer cancelled');
+                        window.location.reload();
+                    } catch (error){
+                        console.log(error);
+                        alert('Failed canceling offer');
+                    }
+
+                    this.processing = false;
+                },
+                async acceptFlex(nugget){
+                    const web3 = new Web3(Web3.givenProvider);
+                    const accounts = await web3.eth.requestAccounts();
+                    const contract = new web3.eth.Contract(this.contract.abi, this.product.address);
+                    this.processing = true;
+
+                    try {
+                        //const priceInWei = web3.utils.toWei(nugget.updatePrice.toString(), 'ether');
+                        await contract.methods.useFlex(nugget.index, nugget.updatePrice.toString()).send({ from: accounts[0]  });
+                        alert('Nugget price accepted');
+                        window.location.reload();
+                    } catch (error){
+                        console.log(error);
+                        alert('Failed accepting Flex');
+                    }
+
+                    this.processing = false;
+                },
+                async doOffer(nugget){
+                    const web3 = new Web3(Web3.givenProvider);
+                    const accounts = await web3.eth.requestAccounts();
+                    const contract = new web3.eth.Contract(this.contract.abi, this.product.address);
+                    this.processing = true;
+
+                    try {
+                        const priceInWei = web3.utils.toWei(nugget.salePrice.toString(), 'ether');
+                        await contract.methods.sell(nugget.index, priceInWei).send({ from: accounts[0]  });
+                        alert('Nugget successfully listed');
+                        window.location.reload();
+                    } catch (error){
+                        console.log(error);
+                        alert('Failed processing listing');
+                    }
+
+                    this.processing = false;
+                },
+                async doPurchase(nugget){
+                    const web3 = new Web3(Web3.givenProvider);
+                    const accounts = await web3.eth.requestAccounts();
+                    const contract = new web3.eth.Contract(this.contract.abi, this.product.address);
+                    this.processing = true;
+
+                    const price =  this.selectedNugget.forSale ? this.selectedNugget.salePrice : this.selectedNugget.price;
+
+                    try {
+                        await contract.methods.purchase(nugget.index).send({ from: accounts[0], value: price });
+                        alert('Nugget successfully purchased');
+                        window.location.reload();
+                    } catch (error){
+                        console.log(error);
+                        alert('Failed processing purchased');
+                    }
+
+                    this.processing = false;
+                },
+                async createNugget() {
+                    try {
+                        this.processing = true;
+                        const web3 = new Web3(Web3.givenProvider);
+                        const accounts = await web3.eth.requestAccounts();
+                        const contract = new web3.eth.Contract(this.contract.abi, this.product.address);
+
+                        const priceInWei = web3.utils.toWei(this.newNugget.price.toString(), 'ether');
+
+                        await contract.methods.issueNugget(
+                            this.newNugget.from,
+                            this.newNugget.to,
+                            this.newNugget.arrivalTime, // Convert datetime to timestamp
+                            this.newNugget.seats,
+                            priceInWei, // Send price in Wei
+                            this.newNugget.bRet,
+                            this.newNugget.bChain,
+                            this.newNugget.nuggetType,
+                            this.newNugget.flex
+                        ).send({ from: accounts[0] });
+                        alert('Nugget created successfully');
+                        window.location.reload();
+                    } catch (error) {
+                        console.error('Error creating nugget:', error);
+                    }
+                    this.processing = false;
+                }
+            },
+            mounted() {
+                toolbar.registerListener(async (web3) => {
+                    this.nuggets = [];
+
+                    const contract = new web3.eth.Contract(this.contract.abi, this.product.address);
+                    const accounts = await web3.eth.requestAccounts();
+                    this.accounts = accounts;
+
+                    try {
+                        // Get the total number of Nuggets
+                        const totalNuggets = await contract.methods.nuggetCount().call();
+
+                        const nuggetPromises = [];
+                        for (let i = 0; i < totalNuggets; i++) {
+                            nuggetPromises.push(contract.methods.get(i).call());
+                        }
+
+                        const rawNuggets = await Promise.all(nuggetPromises);
+
+                        // Convert the raw array to a reactive array
+                        let index = 0;
+                        const nuggets = rawNuggets.map(nugget => {
+                            // Create a new object with the same properties as the raw nugget
+                            return {
+                                ...nugget, // Spread the properties from the raw nugget
+                                index: index++, // Add an index property,
+                                canSell: nugget.owner == accounts[0]
+                            };
+                        });
+
+                        this.nuggets = nuggets.reduce((all, nugget) => {
+                            if (nugget.owner.toLowerCase() == this.product.address.toLowerCase()){
+                                all.push(nugget);
+                                this.totalSeatsAvailable += parseInt(nugget.seats);
+                            }
+                            if (nugget.forSale) {
+                                all.push(nugget);
+                                this.totalSeatsAvailable += parseInt(nugget.seats);
+                            }
+                            return all;
+                        }, []);
+
+                        this.myNuggets = nuggets.reduce((all, nugget) => {
+                            if (nugget.owner.toLowerCase() == accounts[0].toLowerCase()){
+                                all.push(nugget);
+                            }
+                            return all;
+                        }, []);
+
+                        console.log(this.nuggets)
+                    } catch (error) {
+                        console.error('Error fetching nuggets:', error);
+                    }
+
+                    this.updateNuggetsDisplay();
+                });
+
+
+                const fetchPrices = async () => {
+                    const web3 = new Web3(Web3.givenProvider);
+                    const accounts = await web3.eth.requestAccounts();
+                    this.priceUpdate = false;
+
+                    for (let i = 0; i < this.myNuggets.length; i++) {
+                        const nugget = this.myNuggets[i];
+                        try {
+                            const response = await fetch(`/products/supply/0xaf804d4b312e3648cbc90d47cd0569adfbf6b8ab/${nugget.index}`);
+                            const data = await response.json();
+                            if (data) {
+                                //nugget.price = data.price; // Update the price in the nugget object
+                                if (Number.isInteger(data) && parseInt(nugget.price) != data){
+                                    nugget.updatePrice = data;
+                                    this.priceUpdate = true;
+                                }
+                            }
+                        } catch (error) {}
+                    }
+                };
+                setInterval(fetchPrices, 2500);
+
+            },
+            template,
+            computed: {
+                formattedPrice() {
+                    return (price) => {
+                        console.log(price);
+                        const web3 = new Web3(Web3.givenProvider);
+                        return web3.utils.fromWei(price.toString(), 'ether'); // Format to 4 decimal places
+                    };
+                },
+                // New computed property for the input field
+                formattedPurchasePrice() {
+                    if (this.selectedNugget.forSale)
+                        return this.formattedPrice(this.selectedNugget.salePrice || 0);
+                    else
+                        return this.formattedPrice(this.selectedNugget.price || 0);
+                }
+            },
+        }).mount('#vue3-app');
+    });
+</script>
+
+
+
+
+
+</html>
